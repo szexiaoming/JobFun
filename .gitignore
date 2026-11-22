@@ -1,0 +1,49 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+.eggs/
+.pytest_cache/
+
+# Environment (secrets stay local)
+.env
+*.env.local
+infra/staging/application.env
+
+# Virtual environment
+venv/
+.venv/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Claude Code local settings (machine-specific)
+.claude/settings.local.json
+
+# Data (runtime) — allow only the reviewed synthetic evaluation benchmark
+data/*
+!data/evaluation/
+data/evaluation/*
+!data/evaluation/evidence_benchmark_v1.json
+
+# Personal resume fixtures and UI screenshots (owner's real resume)
+tests/fixtures/
+tests/screenshots/
+
+# Next.js client
+web/node_modules/
+web/.next/
+web/out/
+web/.env.local
+web/next-env.d.ts
+web/tsconfig.tsbuildinfo
+
+# OS / misc
+.DS_Store
+Thumbs.db
+$null

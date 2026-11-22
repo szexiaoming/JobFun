@@ -1,0 +1,6 @@
+-r requirements.txt
+
+# Optional local vector retrieval. This pulls in Torch and is intentionally
+# separate from the core application dependencies.
+chromadb>=0.4.0
+sentence-transformers>=2.2.0
