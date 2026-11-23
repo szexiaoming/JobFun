@@ -14,6 +14,7 @@ from src.api.schemas import (
     InterviewInsightsResponse,
     InterviewAttemptDetailResponse,
     InterviewQuestionResponse,
+    GapRequirementResponse,
     JobDetailResponse,
     JobSummaryResponse,
     ResumeDetailResponse,
@@ -81,6 +82,17 @@ async def application_detail(
     service: ReadService,
 ) -> dict:
     return _required(service.get_application(application_id))
+
+
+@router.get(
+    "/applications/{application_id}/requirements",
+    response_model=list[GapRequirementResponse],
+)
+async def application_requirements(
+    application_id: ResourceId,
+    service: ReadService,
+) -> list[dict]:
+    return _required(service.get_application_requirements(application_id))
 
 
 @router.get(

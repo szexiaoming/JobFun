@@ -6,8 +6,9 @@ export function ResumeOutline({ data, compact = false }: { data: UnknownRecord |
   return <div className={`resumeOutline${compact ? " compact" : ""}`}>{sections.map((section, sectionIndex) => {
     const entries = Array.isArray(section.entries) ? section.entries.map(asRecord).filter(Boolean) as UnknownRecord[] : [];
     return <section key={`${text(section.title, "简历章节")}-${sectionIndex}`}><h3>{text(section.title, "简历章节")}</h3>{entries.length ? entries.map((entry, entryIndex) => {
-      const bullets = stringList(entry.bullets);
-      return <article key={`${text(entry.header, "经历")}-${entryIndex}`}><h4>{text(entry.header, "经历")}</h4>{bullets.length ? <ul>{bullets.map((bullet, bulletIndex) => <li key={`${bullet}-${bulletIndex}`}>{bullet}</li>)}</ul> : <p>没有可读取的要点。</p>}</article>;
+      const bullets = bulletList(entry.bullets);
+      const entrySourceId = text(entry.source_id, "");
+      return <article key={`${text(entry.header, "经历")}-${entryIndex}`}><h4 id={entrySourceId ? `resume-source-${entrySourceId}` : undefined}>{text(entry.header, "经历")}</h4>{bullets.length ? <ul>{bullets.map((bullet, bulletIndex) => <li id={bullet.sourceId ? `resume-source-${bullet.sourceId}` : undefined} key={`${bullet.sourceId || bullet.text}-${bulletIndex}`}>{bullet.text}</li>)}</ul> : <p>没有可读取的要点。</p>}</article>;
     }) : <p>本章节还没有条目。</p>}</section>;
   })}</div>;
 }
@@ -35,5 +36,13 @@ export function JobRequirements({ data }: { data: UnknownRecord | null | undefin
 
 function asRecord(value: unknown): UnknownRecord | null { return value && typeof value === "object" && !Array.isArray(value) ? value as UnknownRecord : null; }
 function stringList(value: unknown): string[] { return Array.isArray(value) ? value.filter((item): item is string => typeof item === "string" && Boolean(item.trim())) : []; }
+function bulletList(value: unknown): Array<{ text: string; sourceId: string }> {
+  if (!Array.isArray(value)) return [];
+  return value.map((item) => {
+    if (typeof item === "string") return { text: item, sourceId: "" };
+    const record = asRecord(item);
+    return { text: text(record?.text, ""), sourceId: text(record?.source_id, "") };
+  }).filter((item) => item.text);
+}
 function text(value: unknown, fallback: string): string { return typeof value === "string" && value.trim() ? value : fallback; }
 function experience(value: unknown): string { return typeof value === "number" && Number.isFinite(value) ? `${value}+ 年` : "未注明"; }

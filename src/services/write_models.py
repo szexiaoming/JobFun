@@ -12,6 +12,7 @@ from config import get_active_model, get_transcription_runtime_label
 from src.core.progress_manager import STATUS_FLOW
 from src.db.models import Application, ApplicationEvent, JobDescription, Resume
 from src.db.sqlite_client import Database
+from src.services.gap_explanations import json_object, requirement_options
 from src.repositories.contracts import (
     OperationRepository,
     OwnershipRepository,
@@ -204,6 +205,63 @@ class WriteApplicationService:
             input_units=len(str(resume.get("structured_json", ""))) + len(str(job.get("structured_json", ""))),
         )
         return _public_operation(operation)
+
+    def queue_gap_explanation(
+        self,
+        *,
+        application_id: int,
+        requirement_key: str,
+        idempotency_key: str,
+    ) -> dict:
+        key = str(requirement_key or "").strip()
+        if not key or len(key) > 2_000:
+            raise WriteValidationError("A valid requirement key is required")
+        request_hash = _request_hash({"application_id": application_id, "requirement_key": key})
+        existing = self._existing("gap_explanation", idempotency_key, request_hash)
+        if existing:
+            return _public_operation(existing, replayed=True)
+        application = self._ownership.get_application(self.user_id, application_id)
+        if application is None or not int(application.get("match_id") or 0):
+            raise ResourceNotFoundError("Application or match does not exist")
+        job_id = int(application["jd_id"])
+        resume_id = int(application["resume_id"])
+        match = self._ownership.get_match(self.user_id, int(application["match_id"]))
+        job = self._ownership.get_job_description(self.user_id, job_id)
+        resume = self._ownership.get_resume(self.user_id, resume_id)
+        if (
+            match is None or job is None or resume is None
+            or int(match["jd_id"]) != job_id or int(match["resume_id"]) != resume_id
+        ):
+            raise ResourceNotFoundError("Application or match does not exist")
+        options = requirement_options(job_id, json_object(job.get("structured_json")))
+        if not any(item["key"] == key for item in options):
+            raise WriteValidationError("Requirement is not part of this application")
+        self._check_limits()
+        operation = self._create_queued_operation(
+            operation_type="gap_explanation",
+            idempotency_key=idempotency_key,
+            request_hash=request_hash,
+            input_refs={"application_id": application_id},
+            payload={"requirement_key": key},
+            model=_model("agent"),
+            input_units=len(key) + len(str(resume.get("structured_json") or "")),
+        )
+        return _public_operation(operation)
+
+    def get_gap_explanation(self, operation_id: int) -> dict | None:
+        operation = self._operations.get(self.user_id, operation_id)
+        if (
+            operation is None
+            or operation.get("operation_type") != "gap_explanation"
+            or operation.get("status") != "succeeded"
+        ):
+            return None
+        application_id = int((operation.get("input_refs_json") or {}).get("application_id") or 0)
+        if self._ownership.get_application(self.user_id, application_id) is None:
+            return None
+        payload = self._operations.get_payload(operation_id, self.user_id)
+        result = payload.get("result") if isinstance(payload, dict) else None
+        return result if isinstance(result, dict) else None
 
     def queue_interview_answer(
         self,

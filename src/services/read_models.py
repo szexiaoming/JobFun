@@ -6,6 +6,8 @@ import json
 from dataclasses import asdict
 from typing import Any
 
+from src.core.source_locator import assign_source_ids
+from src.services.gap_explanations import json_object, requirement_options, verified_evidence
 from src.repositories.contracts import OwnershipRepository
 from src.services.context import RequestContext
 
@@ -85,6 +87,31 @@ class ReadApplicationService:
     def get_application(self, application_id: int) -> dict | None:
         row = self._repository.get_application(self.user_id, application_id)
         return self._application(row, include_content=True) if row else None
+
+    def get_application_requirements(self, application_id: int) -> list[dict] | None:
+        application = self._repository.get_application(self.user_id, application_id)
+        if application is None:
+            return None
+        job_id = int(application["jd_id"])
+        job = self._repository.get_job_description(self.user_id, job_id)
+        resume = self._repository.get_resume(self.user_id, int(application["resume_id"]))
+        match_id = int(application.get("match_id") or 0)
+        if job is None or resume is None or not match_id:
+            return []
+        match = self._repository.get_match(self.user_id, match_id)
+        if match is None or int(match["jd_id"]) != job_id or int(match["resume_id"]) != int(resume["id"]):
+            return []
+        options = requirement_options(job_id, json_object(job.get("structured_json")))
+        stored = {
+            str(row["normalized_key"]): row
+            for row in self._repository.list_match_evidence(self.user_id, match_id)
+        }
+        resume_json = json_object(resume.get("structured_json"))
+        result = []
+        for option in options:
+            status, evidence = verified_evidence(stored.get(option["key"]), resume_json)
+            result.append({**option, "status": status, "evidence": evidence})
+        return result
 
     def get_interview_insights(self, application_id: int) -> dict | None:
         insights = self._repository.get_interview_insights(
@@ -173,9 +200,9 @@ class ReadApplicationService:
         }
         if include_content:
             result["notes"] = str(row.get("notes") or "")
-            result["resume"]["structured_json"] = _json_object(
+            result["resume"]["structured_json"] = assign_source_ids(_json_object(
                 resume_row.get("structured_json") if resume_row else None
-            )
+            ))
             result["job"]["structured_json"] = _json_object(
                 job_row.get("structured_json") if job_row else None
             )

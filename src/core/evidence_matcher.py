@@ -287,6 +287,7 @@ def run_evidence_match(
     *,
     requirements: Optional[list[JobRequirement]] = None,
     db: Optional[Database] = None,
+    client=None,
 ) -> list[EvidenceMatch]:
     """Run the standalone Evidence Matcher and persist validated results."""
     database = db or get_db()
@@ -306,7 +307,7 @@ def run_evidence_match(
     message = build_evidence_match_message(prompt_requirements, resume_json)
 
     try:
-        payload = get_ai_client()._call(
+        payload = (client or get_ai_client())._call(
             model=get_active_model("reasoning"),
             system=message["system"],
             user_text=message["user"],

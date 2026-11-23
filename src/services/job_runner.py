@@ -8,6 +8,7 @@ from datetime import datetime, timedelta, timezone
 import config
 from src.ai.client import get_ai_client
 from src.core.audio_transcription import transcribe_interview_audio
+from src.core.evidence_matcher import prepare_job_requirements, run_evidence_match
 from src.core.interview_practice import evaluate_text_answer
 from src.core.latex_parser import parse_resume_text
 from src.core.match_engine import run_match
@@ -17,6 +18,10 @@ from src.repositories.operations import SQLiteOperationRepository
 from src.repositories.sqlite_ownership import SQLiteOwnershipRepository
 from src.repositories.stored_objects import StoredObjectDatabaseRepository
 from src.repositories.worker_health import WorkerHeartbeatRepository
+from src.services.gap_explanations import (
+    build_explanation, json_object, requirement_options, resume_candidates,
+    verified_evidence,
+)
 from src.services.alerts import configured_alert_sink
 from src.storage.local import LocalObjectStore
 from src.storage.s3 import S3ObjectStore
@@ -131,7 +136,7 @@ class OperationRunner:
         user_id = int(operation["user_id"])
         refs = operation.get("input_refs_json") or {}
         client = self._client
-        if operation_type != "interview_transcription":
+        if operation_type not in {"interview_transcription", "gap_explanation"}:
             client = client or get_ai_client()
 
         if operation_type == "resume_parse":
@@ -160,6 +165,8 @@ class OperationRunner:
                     "structured_json": json.dumps(structured, ensure_ascii=False),
                 },
             )
+            if structured:
+                prepare_job_requirements(job_id, structured, db=self._database)
             return {"job_id": job_id}, len(json.dumps(structured)), 0.0, None
 
         if operation_type == "match":
@@ -181,7 +188,74 @@ class OperationRunner:
                 client=client,
             )
             match_id = int(report["match_result"].id)
+            if job_json:
+                prepare_job_requirements(job_id, job_json, db=self._database)
             return {"match_id": match_id}, len(json.dumps(job_json)) + len(json.dumps(resume_json)), 0.0, None
+
+        if operation_type == "gap_explanation":
+            application_id = int(refs["application_id"])
+            application = self._ownership.get_application(user_id, application_id)
+            if application is None or not int(application.get("match_id") or 0):
+                raise ValueError("Gap explanation application not owned")
+            match_id = int(application["match_id"])
+            resume_id = int(application["resume_id"])
+            job_id = int(application["jd_id"])
+            match = self._ownership.get_match(user_id, match_id)
+            resume = self._ownership.get_resume(user_id, resume_id)
+            job = self._ownership.get_job_description(user_id, job_id)
+            if (
+                match is None or resume is None or job is None
+                or int(match["resume_id"]) != resume_id or int(match["jd_id"]) != job_id
+            ):
+                raise ValueError("Gap explanation inputs not owned")
+            resume_json = json_object(resume.get("structured_json"))
+            job_json = json_object(job.get("structured_json"))
+            key = str(payload.get("requirement_key") or "")
+            requirement = next(
+                (item for item in requirement_options(job_id, job_json) if item["key"] == key),
+                None,
+            )
+            if requirement is None:
+                raise ValueError("Requirement is not part of the pinned job")
+            active_requirements = prepare_job_requirements(job_id, job_json, db=self._database)
+            selected = next((item for item in active_requirements if item.normalized_key == key), None)
+            if selected is None:
+                raise ValueError("Requirement is not persisted")
+            evidence_rows = self._ownership.list_match_evidence(user_id, match_id)
+            evidence_row = next((item for item in evidence_rows if item["requirement_id"] == selected.id), None)
+            if evidence_row is None:
+                try:
+                    run_evidence_match(
+                        match_id, job_id, resume_json,
+                        requirements=active_requirements,
+                        db=self._database,
+                        client=client,
+                    )
+                    evidence_rows = self._ownership.list_match_evidence(user_id, match_id)
+                    evidence_row = next((item for item in evidence_rows if item["requirement_id"] == selected.id), None)
+                except Exception as exc:
+                    logger.warning("gap_evidence_unavailable: %s", type(exc).__name__)
+            from src.ai.langchain_gap import propose_gap_action
+
+            _, verified = verified_evidence(evidence_row, resume_json)
+            candidates = resume_candidates(resume_json)
+            draft = propose_gap_action(
+                requirement, verified, candidates,
+                user_id=user_id, resume_id=resume_id,
+            )
+            result = build_explanation(
+                application_id=application_id,
+                requirement=requirement,
+                evidence_row=evidence_row,
+                resume_json=resume_json,
+                agent_draft=draft,
+            )
+            return (
+                {"application_id": application_id, "requirement_id": int(selected.id)},
+                len(json.dumps(result, ensure_ascii=False)),
+                0.0,
+                {"result": result},
+            )
 
         if operation_type == "interview_transcription":
             object_id = int(refs["object_id"])

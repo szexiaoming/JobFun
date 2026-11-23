@@ -15,6 +15,8 @@ from src.api.schemas import (
     InterviewAttemptCreateRequest,
     InterviewTranscriptionCreateRequest,
     InterviewTranscriptionDraftResponse,
+    GapExplanationRequest,
+    GapExplanationResponse,
     JobCreateRequest,
     MatchCreateRequest,
     OperationResponse,
@@ -100,6 +102,35 @@ async def create_match(
             idempotency_key=idempotency_key,
         )
     )
+
+
+@router.post(
+    "/applications/{application_id}/gap-explanations",
+    response_model=OperationResponse,
+    status_code=status.HTTP_202_ACCEPTED,
+)
+async def create_gap_explanation(
+    application_id: ResourceId,
+    body: GapExplanationRequest,
+    service: WriteService,
+    idempotency_key: IdempotencyKey,
+) -> dict:
+    return _execute(lambda: service.queue_gap_explanation(
+        application_id=application_id,
+        requirement_key=body.requirement_key,
+        idempotency_key=idempotency_key,
+    ))
+
+
+@router.get(
+    "/gap-explanations/{operation_id}",
+    response_model=GapExplanationResponse,
+)
+async def gap_explanation_result(
+    operation_id: ResourceId,
+    service: WriteService,
+) -> dict:
+    return _required_gap(service.get_gap_explanation(operation_id))
 
 
 @router.post(
@@ -249,3 +280,13 @@ def _execute(action: Callable[[], dict]) -> dict:
             code=exc.code,
             message="写入操作无法完成",
         ) from exc
+
+
+def _required_gap(value: dict | None) -> dict:
+    if value is None:
+        raise APIError(
+            status_code=404,
+            code="resource_not_found",
+            message="请求的资源不存在",
+        )
+    return value

@@ -90,6 +90,12 @@ class OwnershipRepository(Protocol):
         resource_id: int,
     ) -> dict[str, Any] | None: ...
 
+    def list_match_evidence(
+        self,
+        user_id: int,
+        match_id: int,
+    ) -> list[dict[str, Any]]: ...
+
     def get_interview_question(
         self,
         user_id: int,

@@ -191,6 +191,23 @@ class SQLiteOwnershipRepository:
             2,
         )
 
+    def list_match_evidence(self, user_id: int, match_id: int) -> list[dict[str, Any]]:
+        return self._list(
+            """
+            SELECT evidence.*, requirement.normalized_key
+            FROM evidence_matches AS evidence
+            JOIN match_results AS match ON match.id = evidence.match_id
+            JOIN job_requirements AS requirement
+              ON requirement.id = evidence.requirement_id
+             AND requirement.jd_id = match.jd_id
+            JOIN resumes AS resume ON resume.id = match.resume_id
+            JOIN job_descriptions AS job ON job.id = match.jd_id
+            WHERE match.id = ? AND resume.user_id = ? AND job.user_id = ?
+            ORDER BY evidence.id ASC
+            """,
+            (match_id, user_id, user_id),
+        )
+
     def get_interview_question(
         self,
         user_id: int,

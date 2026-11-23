@@ -20,6 +20,35 @@ export type Operation = {
   replayed: boolean;
 };
 
+export type GapEvidence = {
+  source_id: string;
+  text: string;
+  section: string;
+  entry: string;
+  bullet_index: number | null;
+};
+
+export type GapRequirement = {
+  key: string;
+  text: string;
+  category: string;
+  priority: number;
+  status: "proven" | "partial" | "missing" | "uncertain" | "unassessed";
+  evidence: GapEvidence[];
+};
+
+export type GapExplanation = {
+  application_id: number;
+  requirement: GapRequirement;
+  status: GapRequirement["status"];
+  evidence: GapEvidence[];
+  candidate_evidence: GapEvidence[];
+  explanation: string;
+  clarification_question: string;
+  next_action: string;
+  mode: "langchain" | "baseline";
+};
+
 export type StoredObject = {
   id: number;
   kind: "resume_source" | "job_source" | "interview_audio";

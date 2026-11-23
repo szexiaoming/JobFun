@@ -234,6 +234,39 @@ class InterviewAttemptDetailResponse(BaseModel):
     created_at: str = ""
 
 
+class GapEvidenceResponse(BaseModel):
+    source_id: str
+    text: str
+    section: str
+    entry: str
+    bullet_index: int | None = None
+
+
+class GapRequirementResponse(BaseModel):
+    key: str
+    text: str
+    category: str
+    priority: int
+    status: Literal["proven", "partial", "missing", "uncertain", "unassessed"] = "unassessed"
+    evidence: list[GapEvidenceResponse] = Field(default_factory=list)
+
+
+class GapExplanationRequest(BaseModel):
+    requirement_key: str = Field(min_length=1, max_length=2_000)
+
+
+class GapExplanationResponse(BaseModel):
+    application_id: int
+    requirement: GapRequirementResponse
+    status: Literal["proven", "partial", "missing", "uncertain", "unassessed"]
+    evidence: list[GapEvidenceResponse] = Field(default_factory=list)
+    candidate_evidence: list[GapEvidenceResponse] = Field(default_factory=list)
+    explanation: str
+    clarification_question: str = ""
+    next_action: str
+    mode: Literal["langchain", "baseline"]
+
+
 class OperationResponse(BaseModel):
     id: int
     operation_type: str

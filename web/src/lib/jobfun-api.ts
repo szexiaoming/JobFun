@@ -1,6 +1,7 @@
 import "server-only";
 
 import { backendRequest } from "@/lib/server-api";
+import type { GapRequirement } from "@/lib/client-api-types";
 
 export type WorkbenchItem = {
   application_id: number;
@@ -199,6 +200,10 @@ export function getJob(id: number): Promise<JobDetail> {
 
 export function getApplication(id: number): Promise<ApplicationDetail> {
   return backendRequest<ApplicationDetail>(`/applications/${id}`);
+}
+
+export function getApplicationRequirements(id: number): Promise<GapRequirement[]> {
+  return backendRequest<GapRequirement[]>(`/applications/${id}/requirements`);
 }
 
 export function listInterviewQuestions(applicationId: number): Promise<InterviewQuestion[]> {

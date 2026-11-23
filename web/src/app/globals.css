@@ -572,3 +572,17 @@ svg { width: 1.25rem; height: 1.25rem; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
 }
+.gapWorkspace { display: grid; gap: 1rem; }
+.gapWorkspace .fieldGroup { max-width: 48rem; }
+.gapWorkspace .primaryButton { justify-self: start; }
+.gapSelected, .gapResult { display: grid; gap: .75rem; padding: 1rem; border: 1px solid var(--line, #d6dce5); border-radius: 1rem; background: var(--surface, #fff); }
+.gapSelected > strong, .gapResult > h3 { overflow-wrap: anywhere; }
+.gapSelected > p, .gapResult > p { margin: 0; line-height: 1.6; overflow-wrap: anywhere; }
+.gapSelected > .stateBadge, .gapResult > .stateBadge { justify-self: start; }
+.gapEvidence h4 { margin: 0 0 .5rem; }
+.gapEvidence ul { margin: 0; padding-left: 1.25rem; display: grid; gap: .6rem; }
+.gapEvidence li, .gapEvidence p { overflow-wrap: anywhere; }
+.gapEvidence li p { margin: 0 0 .2rem; }
+.gapEvidence small, .gapResult small { color: var(--muted, #64748b); }
+.gapEvidence .textLink { display: inline-block; margin-left: .6rem; }
+.resumeOutline [id^="resume-source-"] { scroll-margin-top: 6rem; }

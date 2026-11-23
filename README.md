@@ -5,7 +5,7 @@
 [![Next.js](https://img.shields.io/badge/Next.js-16-111827?logo=next.js)](web/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.31_API-009688?logo=fastapi)](src/api/)
 [![PWA](https://img.shields.io/badge/PWA-ready-5A67D8)](web/src/app/manifest.ts)
-[![Tests](https://img.shields.io/badge/tests-319_passed-22C55E)](tests/)
+[![Tests](https://img.shields.io/badge/tests-326_passed-22C55E)](tests/)
 
 ![JobFun 求职工作台](docs/images/jobfun-dashboard.png)
 
@@ -17,6 +17,7 @@ JobFun 面向需要针对不同岗位持续调整申请策略的技术求职者�
 
 - **简历与岗位导入**：支持文本、PDF、Overleaf ZIP 和岗位截图等输入，并以异步任务跟踪解析状态。
 - **证据优先匹配**：从技能、经验、教育、软技能和文化信号五个维度解释匹配结果；分数不是录用概率。
+- **岗位差距解释**：在已匹配申请中逐项核对要求与简历原文，生成待确认问题和下一步行动；可选 LangChain 只读工具与临时向量检索提供候选段落。
 - **申请闭环**：将岗位、简历版本和匹配报告绑定到同一申请，使用受约束的状态机推进流程。
 - **面试练习**：围绕岗位与真实经历生成问题，支持文字回答与受控语音转写，并按完整性、真实性、技术正确性和表达结构反馈。
 - **隐私与所有权**：服务端校验用户归属，上传对象默认私有，浏览器脚本无法读取 Bearer Token。
@@ -93,6 +94,12 @@ Copy-Item .env.example .env
 
 按需在本地 `.env` 中配置 DeepSeek 或 Anthropic。只有启用语音转写时才需要 OpenAI API Key。不要提交 `.env`。
 
+需要启用 LangChain 差距解释与临时向量检索时，再安装可选依赖；未安装时仍可使用基于已保存证据的基础解释：
+
+```powershell
+.\.venv\Scripts\python.exe -m pip install -r requirements-langchain.txt
+```
+
 ### 2. 启动 API、签发本地 Token 与 Worker
 
 首次打开数据库会自动创建本地 SQLite 表和默认用户。
@@ -129,11 +136,11 @@ npm run dev
 npm run check
 ```
 
-最近一次完整验证结果为 `319 passed, 1 skipped`；跳过项是需要隔离测试数据库的可选 PostgreSQL 合约测试。
+本地完整验证为 `326 passed, 1 skipped`；跳过项是需要隔离测试数据库的可选 PostgreSQL 合约测试。Web 的 lint、类型检查与生产构建通过。
 
 ## 当前状态与下一步
 
-本地无基础设施路线已完成到 Iteration 0.41。现阶段重点不是继续增加模拟运维功能，而是验证真实使用价值和完成隔离预发布演练：
+本地功能已完成到 Iteration 0.42。现阶段重点是验证真实使用价值和完成隔离预发布演练：
 
 1. 使用合成数据接入隔离 PostgreSQL、私有 S3 兼容存储和测试告警通道。
 2. 邀请 3–5 位目标用户完成一次从简历导入到面试复盘的任务，记录完成率、修改率和主要阻塞点。
