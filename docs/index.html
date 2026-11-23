@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0b1530">
+  <meta name="description" content="JobFun 合成数据交互演示：查看岗位要求、简历证据与差距解释。">
+  <title>JobFun · 证据优先的求职助手演示</title>
+  <link rel="icon" type="image/svg+xml" href="./favicon.svg">
+  <link rel="stylesheet" href="./demo.css">
+  <script src="./demo.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">跳转到演示内容</a>
+  <header class="site-header">
+    <a class="brand" href="#top" aria-label="JobFun 首页"><span class="brand-mark">J</span><span><strong>JobFun</strong><small>Evidence first</small></span></a>
+    <nav aria-label="页面导航"><a href="#how-it-works">工作方式</a><a href="#workspace">交互演示</a><a href="https://github.com/szexiaoming/JobFun" target="_blank" rel="noopener noreferrer">查看源码</a></nav>
+    <span class="demo-badge"><span aria-hidden="true"></span>合成数据演示</span>
+  </header>
+
+  <main id="main">
+    <section class="hero" id="top" aria-labelledby="hero-title">
+      <div class="hero-copy">
+        <p class="eyebrow">AI 求职工作台 · 手机可体验</p>
+        <h1 id="hero-title">让每一条岗位要求，<br><span>都能找到证据。</span></h1>
+        <p class="hero-lead">JobFun 把岗位、简历和申请放在同一条证据链上。选择一项要求，看看系统如何区分<strong>已有证据</strong>、<strong>部分相关</strong>和<strong>尚未证明</strong>。</p>
+        <div class="hero-actions"><a class="primary-button" href="#workspace">开始体验</a><a class="secondary-link" href="#how-it-works">了解工作方式 <span aria-hidden="true">↗</span></a></div>
+        <p class="hero-note">此页面只使用虚构示例，不需要登录，不上传文件，不调用真实模型。</p>
+      </div>
+      <div class="hero-visual" aria-hidden="true">
+        <div class="visual-top"><span>岗位要求</span><span class="visual-count">01 / 03</span></div>
+        <div class="visual-requirement"><span class="visual-dot"></span><div><small>必备能力</small><strong>FastAPI 后端开发</strong></div></div>
+        <div class="visual-line"></div>
+        <div class="visual-source"><span class="visual-source-icon">✓</span><div><small>简历原文 · 示例项目</small><strong>使用 FastAPI 搭建服务接口并实现鉴权</strong></div></div>
+        <div class="visual-verdict"><span>证据状态</span><strong>有明确来源</strong></div>
+      </div>
+    </section>
+
+    <section class="how" id="how-it-works" aria-labelledby="how-title">
+      <div class="section-heading"><p class="eyebrow">工作方式</p><h2 id="how-title">从要求到行动，保持可追溯</h2><p>模型可以帮助整理思路，但简历事实必须来自用户提供的材料。</p></div>
+      <div class="step-grid">
+        <article class="step-card"><span class="step-number">01</span><h3>拆解岗位要求</h3><p>把 JD 中的技能和职责拆成可逐项检查的要求。</p></article>
+        <article class="step-card"><span class="step-number">02</span><h3>核对简历原文</h3><p>区分明确证据、部分相关和当前版本未找到的证据。</p></article>
+        <article class="step-card"><span class="step-number">03</span><h3>解释下一步</h3><p>给出待确认问题与行动建议，保留用户对经历的最终确认。</p></article>
+      </div>
+    </section>
+
+    <section class="workspace-section" id="workspace" aria-labelledby="workspace-title">
+      <div class="section-heading workspace-heading"><div><p class="eyebrow">交互演示</p><h2 id="workspace-title">试着解释一项岗位差距</h2><p>下面的公司、岗位和简历都是虚构示例；点击要求后再生成解释。</p></div><span class="workspace-label">本地模拟 · 无真实 AI 请求</span></div>
+      <div class="workspace-grid">
+        <div class="requirements-card">
+          <div class="card-heading"><span class="card-icon" aria-hidden="true">▤</span><div><small>示例岗位 · 北辰实验室</small><h3>后端工程师</h3></div></div>
+          <p class="card-intro">选择要分析的要求</p>
+          <div class="requirement-list" id="requirement-list" role="group" aria-label="岗位要求">
+            <button type="button" class="requirement-button is-selected" data-key="fastapi" aria-pressed="true"><span class="requirement-icon status-proven">✓</span><span class="requirement-copy"><strong>FastAPI 后端开发</strong><small>必备技能</small></span><span class="requirement-state state-proven">有证据</span></button>
+            <button type="button" class="requirement-button" data-key="async" aria-pressed="false"><span class="requirement-icon status-partial">◐</span><span class="requirement-copy"><strong>高并发异步任务治理</strong><small>岗位职责</small></span><span class="requirement-state state-partial">部分相关</span></button>
+            <button type="button" class="requirement-button" data-key="kubernetes" aria-pressed="false"><span class="requirement-icon status-missing">—</span><span class="requirement-copy"><strong>Kubernetes 部署实践</strong><small>加分技能</small></span><span class="requirement-state state-missing">未找到</span></button>
+          </div>
+          <button type="button" class="primary-button analyze-button" id="analyze-button">解释这项差距</button>
+          <p class="small-note">演示只读取下方的示例简历，不会改变简历或申请状态。</p>
+        </div>
+
+        <div class="explanation-card" aria-live="polite" aria-atomic="true">
+          <div class="card-heading"><span class="card-icon mint" aria-hidden="true">✦</span><div><small>差距解释助手</small><h3>分析结果</h3></div></div>
+          <div id="explanation-output" class="explanation-empty"><span class="empty-symbol" aria-hidden="true">◎</span><strong>先选择一项要求</strong><p>点击“解释这项差距”，查看证据、待确认问题和下一步行动。</p></div>
+        </div>
+      </div>
+
+      <div class="resume-card" id="resume-snapshot" aria-labelledby="resume-title">
+        <div class="card-heading"><span class="card-icon" aria-hidden="true">≡</span><div><small>仅供演示 · 虚构简历</small><h3 id="resume-title">本次申请绑定的简历快照</h3></div></div>
+        <div class="resume-entry"><div><span class="resume-entry-label">示例项目</span><h4>求职工作台原型</h4></div><ul><li id="source-fastapi">使用 FastAPI 搭建服务接口并实现鉴权。</li><li id="source-async">实现异步任务排队、状态跟踪与失败重试。</li><li id="source-evidence">将岗位要求与简历原文关联，支持人工核对。</li></ul></div>
+      </div>
+    </section>
+
+    <section class="principle" aria-labelledby="principle-title"><div><p class="eyebrow">产品原则</p><h2 id="principle-title">找不到证据，就明确说出来。</h2><p>真实 JobFun 项目包含 FastAPI、Next.js、异步任务及可选 LangChain 差距解释。此公开页面是独立的合成数据演示，展示交互和产品思路；它没有连接生产数据库，也不会处理朋友的真实简历。</p></div><a href="https://github.com/szexiaoming/JobFun" target="_blank" rel="noopener noreferrer" class="source-button">在 GitHub 查看完整项目</a></section>
+  </main>
+
+  <footer class="site-footer"><span>© 2026 JobFun · 合成数据演示</span><span>所有示例公司、岗位与经历均为虚构。</span></footer>
+</body>
+</html>
